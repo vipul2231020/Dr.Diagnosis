@@ -124,6 +124,7 @@ Spring Boot backend deployed on Render / Heroku / VPS
 ML service containerized via Docker (optional)
 
 🧑‍💻 Authors
+
 Vipul Kumar Gupta
 
 Shashank Chaurasiya
