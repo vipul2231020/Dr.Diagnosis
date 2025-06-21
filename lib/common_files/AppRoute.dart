@@ -23,7 +23,7 @@ class AppRoutes {
   static Map<String, WidgetBuilder> routes = {
   //  home: (context) => const HomePage(),
     predict:(context) =>const predictor(),
-    homePage: (context) => const HealthApp(),
+    homePage: (context) => const HomePage(),
    // imageDiagnosis: (context) => const symptoms(),
     // searchMedicine: (context) => const symptoms(),
     // consultDoctor: (context) => const symptoms(),

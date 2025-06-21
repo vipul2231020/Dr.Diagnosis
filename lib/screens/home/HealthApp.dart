@@ -2,34 +2,67 @@ import 'package:dr_diagnosis/common_files/AppRoute.dart';
 import 'package:dr_diagnosis/screens/features/chatbot.dart';
 
 import 'package:dr_diagnosis/screens/features/disease_predictor.dart';
+import 'package:dr_diagnosis/screens/home/ProfilePage.dart';
 import 'package:flutter/material.dart';
 
+import '../../common_files/Common_Data.dart';
+import '../../common_files/NavigatorInstagram.dart';
 import 'bottomNavBar.dart';
+import 'package:dr_diagnosis/common_files/network_url.dart';
+import 'package:flutter/material.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 
-
-class HealthApp extends StatelessWidget {
-  const HealthApp({super.key});
+class HomePage extends StatefulWidget {
+  const HomePage({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Health App',
-      debugShowCheckedModeBanner: false,
-      home: const HomePage(),
-    );
-  }
+  State<HomePage> createState() => _HomePageState();
 }
 
-class HomePage extends StatelessWidget {
-  const HomePage({super.key});
+class _HomePageState extends State<HomePage> {
+  final storage = const FlutterSecureStorage();
+  Map<String, dynamic>? userData;
+  String name = "Guest";
+  bool isLoading = true;
+  @override
+  void initState() {
+    super.initState();
+    fetchUserData();
+  }
+
+  Future<void> fetchUserData() async {
+    final token = await storage.read(key: 'access_token');
+    final response = await http.get(
+      Uri.parse(networkUrl.Profile),
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      setState(() {
+        userData = json.decode(response.body);
+        name = userData?['fullName'];
+        isLoading = false;
+      });
+    } else {
+      setState(() {
+        isLoading = false;
+      });
+      print("Failed to load profile: ${response.body}");
+    }
+  }
+
 
   @override
   Widget build(BuildContext context) {
     final Size screenSize = MediaQuery.of(context).size;
     final double cardSize = screenSize.width * 0.38;
     final double spacing = screenSize.height * 0.02;
-    int _selectedIndex = 0;
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -45,22 +78,27 @@ class HomePage extends StatelessWidget {
                 children: [
                   Row(
                     children: [
-                      SizedBox(height: screenSize.height*.13,),
-                      const CircleAvatar(
-                        backgroundImage: AssetImage('assets/logo.png'), // Replace with actual path
-                        radius: 24,
+                      SizedBox(height: screenSize.height * .13),
+                      GestureDetector(
+                        child: const CircleAvatar(
+                          backgroundImage: AssetImage('assets/logo.png'),
+                          radius: 24,
+                        ),
+                        onTap: () {
+                          Navigator.of(context).push(createInstagramRoute(ProfileScreen()));
+                        },
                       ),
                       const SizedBox(width: 10),
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
-                        children: const [
-                          Text(
+                        children: [
+                          const Text(
                             'Hi, Welcome Back',
-                            style: TextStyle(color: Colors.blue, fontSize: 15,fontWeight: FontWeight.bold),
+                            style: TextStyle(color: Colors.blue, fontSize: 15, fontWeight: FontWeight.bold),
                           ),
                           Text(
-                            'John Doe',
-                            style: TextStyle(
+                            name.isNotEmpty ? name : 'Guest',
+                            style: const TextStyle(
                               fontSize: 20,
                               fontWeight: FontWeight.bold,
                             ),
@@ -71,14 +109,13 @@ class HomePage extends StatelessWidget {
                   ),
                   Row(
                     children: const [
-                      Icon(Icons.notifications_none, color: Colors.blue,size: 32,),
+                      Icon(Icons.notifications_none, color: Colors.blue, size: 32),
                       SizedBox(width: 10),
-                      Icon(Icons.settings, color: Colors.blue,size: 32,),
+                      Icon(Icons.settings, color: Colors.blue, size: 32),
                     ],
                   ),
                 ],
               ),
-              //SizedBox(height: ),
 
               // Grid buttons
               Expanded(
@@ -88,14 +125,15 @@ class HomePage extends StatelessWidget {
                       spacing: screenSize.width * 0.05,
                       runSpacing: spacing,
                       children: [
-                        featureCard("Check\nSymptoms", Icons.health_and_safety, cardSize,(){
-                          Navigator.push(context,MaterialPageRoute(builder: (context) => predictor()));
-                        }
-                        ),
-                        featureCard("Image\nDiagnosis", Icons.image_search, cardSize,(){}),
-                        featureCard("Search\nMedicine", Icons.search, cardSize,(){Navigator.pushNamed(context,'/check_symptoms');}),
-                        featureCard("Consult AI\nDoc Assistant", Icons.chat, cardSize,(){Navigator.push(context,MaterialPageRoute(builder: (context) => chatbot()));}),
-                        featureCard("Health\nHistory", Icons.history, cardSize,(){Navigator.pushNamed(context,'/check_symptoms');}),
+                        featureCard("Check\nSymptoms", Icons.health_and_safety, cardSize, () {
+                          Navigator.of(context).push(createInstagramRoute(predictor()));
+                        }),
+                        featureCard("Image\nDiagnosis", Icons.image_search, cardSize, () {}),
+                        featureCard("Search\nMedicine", Icons.search, cardSize, () {}),
+                        featureCard("Consult AI\nDoc Assistant", Icons.chat, cardSize, () {
+                          Navigator.of(context).push(createInstagramRoute(chatbot()));
+                        }),
+                        featureCard("Health\nHistory", Icons.history, cardSize, () {}),
                       ],
                     ),
                   ),
@@ -105,13 +143,12 @@ class HomePage extends StatelessWidget {
           ),
         ),
       ),
-
     );
   }
 
-  Widget featureCard(String title, IconData icon, double size,VoidCallback onTap) {
+  Widget featureCard(String title, IconData icon, double size, VoidCallback onTap) {
     return GestureDetector(
-      onTap:onTap,
+      onTap: onTap,
       child: Container(
         height: size,
         width: size,

@@ -131,6 +131,7 @@ class _chatbotState extends State<chatbot> {
         iconTheme: IconThemeData(
           color: Colors.white, //change your color here
         ),
+        //automaticallyImplyLeading: false,
         title: Text(
           "Your Personal AI Doctor 🩺", style: TextStyle(color: Colors.white),),
         backgroundColor: primaryColor,

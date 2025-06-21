@@ -1,3 +1,4 @@
+import 'package:dr_diagnosis/common_files/NavigatorInstagram.dart';
 import 'package:dr_diagnosis/common_files/colors.dart';
 import 'package:dr_diagnosis/common_files/network_url.dart';
 import 'package:dr_diagnosis/screens/home/HealthApp.dart';
@@ -7,6 +8,8 @@ import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+
+import '../../common_files/Loading_Overlays.dart';
 
 final storage = FlutterSecureStorage();
 
@@ -26,27 +29,47 @@ class _LoginPageState extends State<LoginPage> {
   Future<bool> login(String email, String password) async {
     final url = Uri.parse(networkUrl.login);
 
-    final response = await http.post(
-      url,
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({
-        'email': email,
-        'password': password,
-      }),
+    // Show loader
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const LoadingOverlay(message: 'Logging You In \n   Please Wait'),
     );
 
-    if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
-      await storage.write(key: 'access_token', value: data['accessToken']);
-      await storage.write(key: 'refresh_token', value: data['refreshToken']);
-      print('Login success: ${response.body} , ${response.statusCode}');
-      Navigator.push(context, MaterialPageRoute(builder: (context) => MainHomePage()));
-      return true;
-    }
+    try {
+      final response = await http.post(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'email': email,
+          'password': password,
+        }),
+      );
 
-    print('Login failed: ${response.body} , ${response.statusCode}');
-    return false;
+      Navigator.of(context).pop(); // Remove loader
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        await storage.write(key: 'access_token', value: data['accessToken']);
+        await storage.write(key: 'refresh_token', value: data['refreshToken']);
+        print('Login success: ${response.body} , ${response.statusCode}');
+
+        Navigator.of(context).pushReplacement(createInstagramRoute(MainHomePage()));
+        return true;
+      }
+
+      print('Login failed: ${response.body} , ${response.statusCode}');
+      return false;
+    } catch (e) {
+      Navigator.of(context).pop(); // Remove loader on error
+      print('Login error: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Login failed. Please try again.')),
+      );
+      return false;
+    }
   }
+
 
   bool _obscurePassword = true;
 
@@ -167,10 +190,8 @@ class _LoginPageState extends State<LoginPage> {
                 Center(
                   child: GestureDetector(
                     onTap: () {
-                      Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (context) => SignUpPage()),
-                      );
+                      Navigator.of(context).pushReplacement(createInstagramRoute(SignUpPage()));
+
                     },
                     child: Text.rich(
                       TextSpan(
@@ -217,7 +238,7 @@ class _LoginPageState extends State<LoginPage> {
         color: lightBlue,
         borderRadius: BorderRadius.circular(10),
       ),
-      child: TextField(
+      child: TextFormField(
         controller: _controller,
         obscureText: obscure,
         decoration: InputDecoration(
@@ -225,6 +246,12 @@ class _LoginPageState extends State<LoginPage> {
           border: InputBorder.none,
           contentPadding: EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         ),
+        validator: (value) {
+          if (value == null || value.trim().isEmpty) {
+            return 'Email is required';
+          }
+          return null;
+        },
       ),
     );
   }
@@ -235,7 +262,7 @@ class _LoginPageState extends State<LoginPage> {
         color: lightBlue,
         borderRadius: BorderRadius.circular(10),
       ),
-      child: TextField(
+      child: TextFormField(
         controller: password,
         obscureText: _obscurePassword,
         decoration: InputDecoration(
@@ -250,6 +277,12 @@ class _LoginPageState extends State<LoginPage> {
             onPressed: _togglePasswordVisibility,
           ),
         ),
+        validator: (value) {
+          if (value == null || value.trim().isEmpty) {
+            return 'Password is required';
+          }
+          return null;
+        },
       ),
     );
   }

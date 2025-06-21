@@ -13,7 +13,7 @@ import 'package:dr_diagnosis/screens/wlcome/welcome_screen.dart';
 import 'package:flutter/material.dart';
 
 void main() {
-  runApp(MaterialApp(home: splash(),debugShowCheckedModeBanner: false,
+  runApp(MaterialApp(home: Splash(),debugShowCheckedModeBanner: false,
   routes: AppRoutes.routes,)
   );
 }

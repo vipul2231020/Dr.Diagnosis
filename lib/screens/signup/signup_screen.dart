@@ -5,6 +5,8 @@ import 'package:dr_diagnosis/screens/otp/OtpVerificationScreen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../../common_files/Loading_Overlays.dart';
+import '../../common_files/NavigatorInstagram.dart';
 import '../../common_files/colors.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -33,27 +35,48 @@ class _SignUpPageState extends State<SignUpPage> {
       _obscurePassword = !_obscurePassword;
     });
   }
-  Future<void> signup(String fullName, String email, String password,String mobile,String dob) async {
+  Future<void> signup(String fullName, String email, String password, String mobile, String dob) async {
     final url = Uri.parse(networkUrl.signup);
 
-    final response = await http.post(
-      url,
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({
-        'fullName': fullName,
-        'email': email,
-        'password': password,
-        'mobile' : mobile,
-        'dob' : dob
-      }),
+    // Show loading overlay
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const LoadingOverlay(message: "Creating your account..."),
     );
 
-    if (response.statusCode == 200) {
-      Navigator.push(context, MaterialPageRoute(builder: (context) => OtpVerificationScreen(email: email)));
-      print('Signup successful');
-    } else {
-      Navigator.push(context,MaterialPageRoute(builder: (context) => SignUpPage()));
-      print('Signup failed: ${response.body}');
+    try {
+      final response = await http.post(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'fullName': fullName,
+          'email': email,
+          'password': password,
+          'mobile': mobile,
+          'dob': dob,
+        }),
+      );
+
+      Navigator.of(context).pop(); // Remove loading dialog
+
+      if (response.statusCode == 200) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => OtpVerificationScreen(email: email),
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Signup failed: ${response.body}")),
+        );
+      }
+    } catch (e) {
+      Navigator.of(context).pop(); // Remove loading dialog on error
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Something went wrong")),
+      );
     }
   }
 
@@ -94,7 +117,7 @@ class _SignUpPageState extends State<SignUpPage> {
                 SizedBox(height: screenHeight * 0.025),
 
                 _buildLabel("Full name", screenWidth),
-                _buildTextField("Jhon Wick", false,fullName),
+                _buildTextFieldEmail("Jhon Wick", false,fullName),
 
                 _buildLabel("Password", screenWidth),
                 _buildPasswordField(),
@@ -181,7 +204,7 @@ class _SignUpPageState extends State<SignUpPage> {
                 Center(
                   child: GestureDetector(
                     onTap: () {
-                      Navigator.push(context,MaterialPageRoute(builder: (context) => LoginPage()),);
+                      Navigator.of(context).push(createInstagramRoute(LoginPage()));
                     },
                     child: Text.rich(
                       TextSpan(
@@ -236,6 +259,29 @@ class _SignUpPageState extends State<SignUpPage> {
           border: InputBorder.none,
           contentPadding: EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         ),
+      ),
+    );
+  }
+  Widget _buildTextFieldEmail(String hintText, bool obscure,TextEditingController _controller) {
+    return Container(
+      decoration: BoxDecoration(
+        color: lightBlue,
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: TextFormField(
+        controller: _controller,
+        obscureText: obscure,
+        decoration: InputDecoration(
+          hintText: hintText,
+          border: InputBorder.none,
+          contentPadding: EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        ),
+        validator: (value) {
+          if (value == null || value.trim().isEmpty) {
+            return 'Email is required';
+          }
+          return null;
+        },
       ),
     );
   }
@@ -320,7 +366,7 @@ class _SignUpPageState extends State<SignUpPage> {
         color: lightBlue,
         borderRadius: BorderRadius.circular(10),
       ),
-      child: TextField(
+      child: TextFormField(
         controller: password,
         obscureText: _obscurePassword,
         decoration: InputDecoration(
@@ -335,6 +381,12 @@ class _SignUpPageState extends State<SignUpPage> {
             onPressed: _togglePasswordVisibility,
           ),
         ),
+        validator: (value) {
+          if (value == null || value.trim().isEmpty) {
+            return 'Password is required';
+          }
+          return null;
+        },
       ),
     );
   }

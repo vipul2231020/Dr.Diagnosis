@@ -1,8 +1,10 @@
 import 'package:dr_diagnosis/common_files/network_url.dart';
+import 'package:dr_diagnosis/screens/home/Home_page.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
+import '../../common_files/NavigatorInstagram.dart';
 import '../../common_files/colors.dart';
 import '../home/HealthApp.dart';
 
@@ -34,7 +36,8 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
 
     if (response.statusCode == 200) {
       // Navigate to dashboard or home
-      Navigator.push(context,MaterialPageRoute(builder: (context) => HomePage()));
+      Navigator.of(context).push(createInstagramRoute(MainHomePage()));
+
     } else {
       final body = jsonDecode(response.body);
       ScaffoldMessenger.of(context).showSnackBar(

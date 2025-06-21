@@ -4,6 +4,8 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
+import '../../common_files/Common_Data.dart';
+
 
 
 class ProfileScreen extends StatefulWidget {
@@ -16,7 +18,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
   final storage = const FlutterSecureStorage();
   Map<String, dynamic>? userData;
   bool isLoading = true;
-
   @override
   void initState() {
     super.initState();
@@ -36,6 +37,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     if (response.statusCode == 200) {
       setState(() {
         userData = json.decode(response.body);
+        SharedData.name = userData?['fullName'];
         isLoading = false;
       });
     } else {
