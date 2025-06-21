@@ -36,7 +36,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
 
     if (response.statusCode == 200) {
       // Navigate to dashboard or home
-      Navigator.of(context).push(createInstagramRoute(MainHomePage()));
+      Navigator.of(context).pushReplacement(createInstagramRoute(MainHomePage()));
 
     } else {
       final body = jsonDecode(response.body);
